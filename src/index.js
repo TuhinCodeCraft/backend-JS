@@ -1,18 +1,21 @@
 // require('dotenv').config({path: './env'})
 import dotenv from "dotenv"
 import connectDB from "./db/index.js";
+import { app } from "./app.js";
 
 dotenv.config({
     path: './env'
 }) // to use this we need to add experimental feature in script in package.json
+
+const port = process.env.port || 8000
 
 connectDB() // it will return a promise
 .then(() => {
     app.on("error", (error) => {
         console.log(`ERROR: ${error}`);
     })
-    app.listen(process.env.PORT || 8000, () => {
-        console.log(`Server is running on the port: ${process.env.PORT}`);
+    app.listen(port, () => {
+        console.log(`Server is running on the port: ${port}`);
     })
 }) 
 .catch((error) => {
