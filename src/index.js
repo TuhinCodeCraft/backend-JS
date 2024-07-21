@@ -7,7 +7,7 @@ dotenv.config({
     path: './env'
 }) // to use this we need to add experimental feature in script in package.json
 
-const port = process.env.port || 8000
+const port = process.env.PORT || 8000
 
 connectDB() // it will return a promise
 .then(() => {
