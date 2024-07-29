@@ -4,7 +4,7 @@ import connectDB from "./db/index.js";
 import { app } from "./app.js";
 
 dotenv.config({
-    path: './env'
+    path: './.env'
 }) // to use this we need to add experimental feature in script in package.json
 
 const port = process.env.PORT || 8000

@@ -14,7 +14,8 @@ const uploadOnCloudinary = async (localFilePath) => { // it will take time to up
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto" // it will automatically detect the type of the file like image, video, audio etc
         })
-        console.log("File is uploaded on cloudinary ", response.url);
+        // console.log("File is uploaded on cloudinary ", response.url);
+        fs.unlinkSync(localFilePath)
         return response;
     } catch (error) {
         fs.unlinkSync(localFilePath) // if the file is not uploaded on cloudinary from the server then remove the file from the local storage and Sync is used to remove the file synchronously 
