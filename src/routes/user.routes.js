@@ -1,6 +1,7 @@
 import { Router } from "express"; // Router is a class so we need to use the curly braces
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router() // it will return an object which has all the methods like get, post, put, delete etc
 
@@ -17,5 +18,9 @@ router.route("/register").post(
     ]),
     registerUser
 ) // post method is called when we need to create a new user
+
+router.route("/login").post(loginUser)
+
+router.route("/logout").post(verifyJWT, logoutUser)
 
 export default router
