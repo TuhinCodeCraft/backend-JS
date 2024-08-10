@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"; // it is used to handle the async request
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 
@@ -19,8 +19,8 @@ const generateAccessAndRefreshTokens = async (userId) => {
 }
 
 // it is an async function which takes request and response as an argument and it is wrapped inside the asyncHandler function to handle the async request
-const registerUser = asyncHandler(async (req, res) => { 
- 
+const registerUser = asyncHandler(async (req, res) => {
+
     // get user details from frontend
     const {fullName, email, username, password} = req.body
     // console.log('********** req.body **********');
@@ -66,11 +66,13 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase()
     })
 
-    // remove password and refresh token field from response and check if user is created
+    // remove password and refresh token field from response
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
-    if(!createdUser) throw new (500, "Something went wrong while registering the user")
+
+    // check if user is created
+    if(!createdUser) throw new ApiError(500, "Something went wrong while registering the user")
     
     // return response
     return res.status(201).json(
@@ -79,7 +81,7 @@ const registerUser = asyncHandler(async (req, res) => {
 })
 
 const loginUser = asyncHandler (async (req, res) => {
-    // req body -> data
+    // req.body -> data
     const {email, username, password} = req.body
 
     // username or email
@@ -105,7 +107,8 @@ const loginUser = asyncHandler (async (req, res) => {
     // send cookie
     const options = {
         httpOnly: true, 
-        secure: true // now the cookies can only be modified from the server side not from the client side
+        secure: true 
+        // now the cookies can only be modified from the server side not from the client side
     }
 
     return res.status(200)
@@ -131,7 +134,7 @@ const logoutUser = asyncHandler(async (req, res) => {
             }
         },
         {
-            new: true
+            new: true // it will return the updated user object
         }
     )
 
@@ -163,7 +166,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     
         if(incomingRefreshToken !== user?.refreshToken)
             throw new ApiError(401, "Refresh token is expired or used")
-    
     
         const options = {
             httpOnly: true,
@@ -205,7 +207,11 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(200)
-    .json(200, req.user, "Current user fetched Successfully")
+    .json(new ApiResponse(
+        200, 
+        req.user, 
+        "Current user fetched Successfully"
+    ))
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -223,7 +229,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
                 email
             }
         },
-        {new: true}
+        {new: true} // it will return the updated user object
     ).select("-password")
 
     return res
@@ -232,10 +238,16 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
-    const avatarLocalPath = req.file?.path
+    const avatarLocalPath = req.file?.path // we are getting the path of one file so we are using req.file not req.files
 
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is missing")
+    }
+
+    const imageToBeDeleted = req.user?.avatar
+    if(imageToBeDeleted){
+        const publicId = imageToBeDeleted.split("/").pop()?.split(".")[0]
+        await deleteFromCloudinary(publicId)
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
@@ -258,6 +270,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Avatar Image updated successfully"))
 })
+
 const updateUserCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path
 
