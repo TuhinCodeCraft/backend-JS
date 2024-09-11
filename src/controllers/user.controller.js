@@ -130,8 +130,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1 // it will remove the refreshToken field from the user object
             }
         },
         {
@@ -218,7 +218,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async (req, res) => {
     const {fullName, email} = req.body
 
-    if(!fullName || !email){
+    if(!(fullName || email)){
         throw new ApiError(400, "All fileds are required")
     }
 
